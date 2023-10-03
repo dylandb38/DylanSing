@@ -1,0 +1,109 @@
+---
+title: "Dylan Singing"
+output: html_document
+date: "2023-10-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      cache = TRUE,
+                      warning = FALSE,
+                      message = FALSE)
+
+library(tidyverse)
+library(readxl)
+library(DT)
+library(reactable)
+library(lme4)
+library(dplyr)
+library(car)
+library(data.table)
+library(tibble)
+library(kableExtra)
+library(cowplot)
+library(mgcv)
+#Loading necessary packages
+
+data <- read.csv("TotalDyadicRecording.csv", header=T)
+datalabels <- read_excel("DatasetColumnLabels.xlsx")
+dataEMBO <- read_excel("EPDS_LIVE_Prerecorded_EMBO_1.27.23.xlsx")
+dataParticipants <- data %>% distinct(ID)
+#Importing the datasets
+```
+
+```{r include=FALSE}
+dataClean <- data %>% 
+  mutate(ID = as.factor(ID),
+         CateIncome = as.factor(CateIncome),
+         DxStr = as.factor(DxStr),
+         Sex = as.factor(Sex),
+         NameChange = as.factor(NameChange),
+         Use = as.factor(Use),
+         Gender = as.factor(Gender),
+         GenStr = as.factor(GenStr),
+         Glasses = as.factor(Glasses),
+         Sing = as.factor(Sing),
+         Peekaboo = as.factor(Peekaboo),
+         Movement = as.factor(Movement),
+         LeanForward = as.factor(LeanForward),
+         Greeting = as.factor(Greeting),
+         Pacifier = as.factor(Pacifier),
+         FaceCovered = as.factor(FaceCovered),
+         HandinMouth = as.factor(HandinMouth))
+```
+
+## Infant Age and Caregiver Singing - Across Diagnostic Groups {.tabset}
+
+### GAM Visualization
+```{r echo = FALSE}
+dataClean %>% 
+  filter(!is.na(Sing)) %>% 
+  mutate(Sing = as.numeric(Sing)-1) %>% 
+  ggplot(aes(x = Age,
+             y = Sing)) +
+  geom_smooth(aes(group = DxStr,
+                  color = DxStr,
+                  fill = DxStr),
+    method = 'gam', 
+    method.args = list(family = 'binomial'),
+    se = TRUE) +
+  theme_minimal() +
+  labs(x = "Age",
+       y = "Probability that Caregiver Sings",
+       title = "Infant Age as a Predictor of Caregiver Singing") 
+```
+
+### GAM Model
+
+```{r echo=FALSE}
+summary(gam(Sing ~ Age + DxStr, data = dataClean, family = "binomial"))
+```
+
+## Infant Age and Caregiver Singing - Across Income Groups {.tabset}
+
+### GAM Visualization
+```{r echo=FALSE}
+dataClean %>% 
+  filter(!is.na(CateIncome)) %>% 
+  mutate(Sing = as.numeric(Sing)-1) %>% 
+  ggplot(aes(x = Age,
+             y = Sing)) +
+  geom_smooth(aes(group = CateIncome,
+                  color = CateIncome,
+                  fill = CateIncome),
+    method = 'gam', 
+    method.args = list(family = 'binomial'),
+    se = TRUE) +
+  theme_minimal() +
+  labs(x = "Age",
+       y = "Probability that Caregiver Sings",
+       title = "Infant Age as a Predictor of Caregiver Singing") 
+```
+
+### GAM Model
+
+```{r}
+summary(gam(Sing ~ Age + CateIncome, data = dataClean, family = "binomial"))
+```
+
+
